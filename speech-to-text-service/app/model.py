@@ -4,7 +4,7 @@ from faster_whisper import WhisperModel
 print("Loading Whisper model")
 
 model = WhisperModel(
-    "small",
+    "medium",
     device="cuda",
     compute_type="float16"
 )
@@ -16,9 +16,13 @@ def transcribe_audio(filename: str):
 
     segments, info = model.transcribe(
         filename,
-        beam_size=5
+        beam_size=10,
+        vad_filter=True,
+        vad_parameters=dict(
+            min_silence_duration_ms=500
+        ),
+        temperature=[0.0, 0.2, 0.4, 0.6]
     )
-
     text = ""
 
     for segment in segments:

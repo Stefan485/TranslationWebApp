@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
 from tempfile import NamedTemporaryFile
 
-from model import transcribe_audio
+from .model import transcribe_audio
 
 
 app = FastAPI(
