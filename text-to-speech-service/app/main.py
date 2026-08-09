@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from model import tts_model
+
+from .model import tts_model
 
 
 app = FastAPI()
@@ -9,7 +10,6 @@ app = FastAPI()
 class TTSRequest(BaseModel):
     text: str
     language: str = "en"
-
 
 
 @app.post("/tts")

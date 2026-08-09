@@ -1,8 +1,11 @@
-import torch
-import scipy.io.wavfile as wavfile
-from transformers import AutoProcessor, BarkModel
-import uuid
 import os
+import uuid
+
+import numpy as np
+import scipy.io.wavfile as wavfile
+import torch
+from dotenv import load_dotenv
+from transformers import AutoProcessor, BarkModel
 
 
 class TTSModel:
@@ -15,13 +18,8 @@ class TTSModel:
             "suno/bark"
         )
 
-        self.model = BarkModel.from_pretrained(
-            "suno/bark",
-            torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
-        )
-
-        if self.device == "cuda":
-            self.model.to("cuda")
+        self.model = BarkModel.from_pretrained("suno/bark",)
+        self.model.to(self.device)
 
         self.model.eval()
 
@@ -44,7 +42,7 @@ class TTSModel:
             "pt", # Portuguese
             "ru", # Russian
             "tr", # Turkish
-            "zh"  # Chinese simplified
+            "zh", # Chinese simplified
         ]
 
     def get_voice(self, language: str):
@@ -53,7 +51,7 @@ class TTSModel:
         """
 
         voices = {
-            "en": "v2/en_speaker_6",
+            "en": "v2/en_speaker_0",
             "de": "v2/de_speaker_0",
             "fr": "v2/fr_speaker_0",
             "es": "v2/es_speaker_0",
@@ -67,8 +65,12 @@ class TTSModel:
             "zh": "v2/zh_speaker_0",
         }
 
-        return voices.get(language, "v2/en_speaker_6")
+        if language not in voices:
+            raise ValueError(
+                f"Unsupported language: {language}"
+            )
 
+        return voices[language]
 
     def generate_speech(
         self,
@@ -79,7 +81,7 @@ class TTSModel:
         """
         Generate speech from text.
 
-        Returns path to wav file.
+        Returns path to WAV file.
         """
 
         os.makedirs(output_dir, exist_ok=True)
@@ -91,21 +93,43 @@ class TTSModel:
             voice_preset=voice
         )
 
-
         inputs = {
             key: value.to(self.device)
             for key, value in inputs.items()
         }
 
+        print(f"Generating speech: {text}")
 
         with torch.no_grad():
             audio = self.model.generate(
                 **inputs
             )
 
-
         audio = audio.cpu().numpy().squeeze()
 
+        # Normalize audio
+        audio = audio / max(abs(audio).max(), 1e-8)
+
+        # Add a small amount of silence at the end.
+        # This prevents the audio from ending abruptly.
+        sample_rate = self.model.generation_config.sample_rate
+
+        silence_duration = 0.2
+        silence_samples = int(
+            sample_rate * silence_duration
+        )
+
+        silence = np.zeros(
+            silence_samples,
+            dtype=audio.dtype
+        )
+
+        audio = np.concatenate(
+            [audio, silence]
+        )
+
+        # Convert to 16-bit PCM WAV
+        audio = (audio * 32767).astype(np.int16)
 
         filename = f"{uuid.uuid4()}.wav"
 
@@ -114,16 +138,19 @@ class TTSModel:
             filename
         )
 
-
         wavfile.write(
             filepath,
-            self.model.generation_config.sample_rate,
+            sample_rate,
             audio
         )
 
+        print(f"Audio saved to: {filepath}")
 
         return filepath
 
 
-# Load once when service starts
+load_dotenv()
+
+HF_TOKEN = os.getenv("HF_TOKEN")
+
 tts_model = TTSModel()
