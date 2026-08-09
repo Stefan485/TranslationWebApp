@@ -27,8 +27,7 @@ def transcribe_audio(filename: str):
         vad_filter=True,
         vad_parameters=dict(
             min_silence_duration_ms=500
-        ),
-        temperature=[0.0, 0.2, 0.4, 0.6]
+        )
     )
     text = ""
 
