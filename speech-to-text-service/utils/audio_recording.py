@@ -7,7 +7,7 @@ WHISPER_RATE = 16000
 CHANNELS = 1
 DURATION = 10
 DEVICE = 4
-OUTPUT = "test.wav"
+OUTPUT = "./utils/audio/test.wav"
 
 print(f"Using device: {sd.query_devices(DEVICE)['name']}")
 print(f"Recording for {DURATION} seconds")
