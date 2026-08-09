@@ -1,10 +1,17 @@
 from faster_whisper import WhisperModel
+import os
+from dotenv import load_dotenv
+from faster_whisper import WhisperModel
+
+load_dotenv()
+
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 
 print("Loading Whisper model")
 
 model = WhisperModel(
-    "medium",
+    "large-v3",
     device="cuda",
     compute_type="float16"
 )
