@@ -1,3 +1,17 @@
 .env
 audio/
 __pycache__/
+
+front/.dart_tool/
+front/.flutter-plugins
+front/.flutter-plugins-dependencies
+front/.packages
+front/build/
+front/.pub-cache/
+
+
+front/linux/flutter/ephemeral/
+front/android/.gradle/
+front/android/local.properties/
+
+.vscode/
