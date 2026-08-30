@@ -17,7 +17,7 @@ class TranslateChatApp extends StatelessWidget{
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
                 colorScheme: ColorScheme.fromSeed(
-                    seedColor: const Color(0xFF76B900), // NVIDIA green
+                    seedColor: const Color(0xFF76B900),
                     brightness: Brightness.light,
                 ).copyWith(
                     primary: const Color(0xFF76B900),

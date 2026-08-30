@@ -50,7 +50,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         final detected = ref.watch(detectedSourceLangProvider);
                             return Text(detected == null
                                 ? 'Translate chat'
-                                : 'Detected: ${detected.toUpperCase()}');
+                                : 'Detected language: ${detected.toUpperCase()}');
                     },
                 ),
                 actions: [

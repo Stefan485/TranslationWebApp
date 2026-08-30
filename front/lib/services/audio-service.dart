@@ -8,7 +8,6 @@ class AudioService {
     final AudioPlayer _player = AudioPlayer();
 
     bool _recording = false;
-    bool get _isRecording => _recording;
 
 Future<void> startRecording() async {
     final dir = await getTemporaryDirectory();

@@ -53,7 +53,7 @@ class MessageBubble extends StatelessWidget{
                     if (message.translatedText != null &&
                         message.translatedText!.isNotEmpty) ...[
                         if (message.originalText.isNotEmpty)
-                        Divider(color: fg.withOpacity(0.3), height: 12),
+                        Divider(color: fg.withValues(alpha: 0.3), height: 12),
                         Text(
                         message.translatedText!,
                         style: TextStyle(color: fg, fontStyle: FontStyle.italic),
