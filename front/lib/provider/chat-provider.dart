@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -6,16 +7,25 @@ import '../model/chat-msg.dart';
 import '../services/api-service.dart';
 import '../services/audio-service.dart';
 
-final apiServiceProvider = Provider((ref) => ApiService());
-final audioServiceProvider = Provider((ref) => AudioService());
+final apiServiceProvider = Provider<ApiService>((ref) {
+  return ApiService();
+});
 
-final targetLangProvider = StateProvider<String>((ref) => 'en');
+final audioServiceProvider = Provider<AudioService>((ref) {
+  return AudioService();
+});
+
+final targetLangProvider = StateProvider<String>((ref) {
+  return 'en';
+});
 
 final availableLanguagesProvider = FutureProvider<List<Language>>((ref) {
   return ref.read(apiServiceProvider).getSupportedLanguages();
 });
 
-final detectedSourceLangProvider = StateProvider<String?>((ref) => null);
+final detectedSourceLangProvider = StateProvider<String?>((ref) {
+  return null;
+});
 
 final chatProvider =
     StateNotifierProvider<ChatNotifier, List<ChatMessage>>((ref) {
@@ -24,19 +34,21 @@ final chatProvider =
     audio: ref.read(audioServiceProvider),
     getTargetLang: () => ref.read(targetLangProvider),
     getSourceLang: () => ref.read(detectedSourceLangProvider),
-    setDetectedLang: (lang) =>
-        ref.read(detectedSourceLangProvider.notifier).state = lang,
+    setDetectedLang: (lang) {
+      ref.read(detectedSourceLangProvider.notifier).state = lang;
+    },
   );
 });
 
 class ChatNotifier extends StateNotifier<List<ChatMessage>> {
   final ApiService api;
   final AudioService audio;
+
   final String Function() getTargetLang;
   final String? Function() getSourceLang;
   final void Function(String?) setDetectedLang;
 
-  final _uuid = const Uuid();
+  final Uuid _uuid = const Uuid();
 
   ChatNotifier({
     required this.api,
@@ -55,15 +67,41 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     ChatMessage Function(ChatMessage) update,
   ) {
     state = [
-      for (final m in state)
-        if (m.id == id) update(m) else m,
+      for (final message in state)
+        message.id == id ? update(message) : message,
     ];
   }
 
-  Future<void> sendTypedText(String text) async {
-    if (text.trim().isEmpty) return;
+  List<String> _getTranslationContext() {
+    final context = <String>[];
 
-    final userMsg = ChatMessage(
+    for (final message in state.reversed) {
+      if (!message.isUser) {
+        continue;
+      }
+
+      if (message.originalText.trim().isEmpty) {
+        continue;
+      }
+
+      context.add(message.originalText);
+
+      if (context.length == 5) {
+        break;
+      }
+    }
+
+    return context.reversed.toList();
+  }
+
+  Future<void> sendTypedText(String text) async {
+    if (text.trim().isEmpty) {
+      return;
+    }
+
+    final context = _getTranslationContext();
+
+    final userMessage = ChatMessage(
       id: _uuid.v4(),
       type: MessageType.text,
       originalText: text,
@@ -71,7 +109,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       timestamp: DateTime.now(),
     );
 
-    _addMessage(userMsg);
+    _addMessage(userMessage);
 
     final replyId = _uuid.v4();
 
@@ -87,17 +125,16 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     );
 
     try {
-      final result = await api.translateText(
+      final result = await api.translateTextWithContext(
         text: text,
         sourceLang: getSourceLang() ?? 'en',
         targetLang: getTargetLang(),
+        context: context,
       );
-
-      setDetectedLang(result.detectedLang);
 
       _updateMessage(
         replyId,
-        (m) => m.copyWith(
+        (message) => message.copyWith(
           translatedText: result.translatedText,
           status: MessageStatus.sent,
         ),
@@ -107,7 +144,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
 
       _updateMessage(
         replyId,
-        (m) => m.copyWith(
+        (message) => message.copyWith(
           status: MessageStatus.error,
         ),
       );
@@ -115,11 +152,13 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
   }
 
   Future<void> sendVoiceMemo(File audioFile) async {
-    final userMsgId = _uuid.v4();
+    final context = _getTranslationContext();
+
+    final userMessageId = _uuid.v4();
 
     _addMessage(
       ChatMessage(
-        id: userMsgId,
+        id: userMessageId,
         type: MessageType.voice,
         originalText: '',
         audioPath: audioFile.path,
@@ -132,16 +171,18 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     final replyId = _uuid.v4();
 
     try {
-      // STT detects the source language.
       final speech = await api.speechToText(
         audioFile: audioFile,
       );
 
+      print('STT response: ${speech.text}');
+      print('Detected language: ${speech.detectedLang}');
+
       setDetectedLang(speech.detectedLang);
 
       _updateMessage(
-        userMsgId,
-        (m) => m.copyWith(
+        userMessageId,
+        (message) => message.copyWith(
           originalText: speech.text,
           status: MessageStatus.sent,
         ),
@@ -158,12 +199,22 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
         ),
       );
 
-      // Use the language detected by STT.
-      final result = await api.translateText(
+      print(
+        'TRANSLATE: '
+        'text="${speech.text}", '
+        'source="${speech.detectedLang}", '
+        'target="${getTargetLang()}", '
+        'context=$context',
+      );
+
+      final result = await api.translateTextWithContext(
         text: speech.text,
         sourceLang: speech.detectedLang!,
         targetLang: getTargetLang(),
+        context: context,
       );
+
+      print('TRANSLATION: ${result.translatedText}');
 
       String? ttsPath;
 
@@ -174,13 +225,15 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
         );
 
         ttsPath = await audio.saveAudioBytes(bytes);
+
+        print('TTS audio saved: $ttsPath');
       } catch (e) {
         print('TTS failed: $e');
       }
 
       _updateMessage(
         replyId,
-        (m) => m.copyWith(
+        (message) => message.copyWith(
           translatedText: result.translatedText,
           audioPath: ttsPath,
           status: MessageStatus.sent,
@@ -190,8 +243,15 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       print('Voice translation failed: $e');
 
       _updateMessage(
-        userMsgId,
-        (m) => m.copyWith(
+        userMessageId,
+        (message) => message.copyWith(
+          status: MessageStatus.error,
+        ),
+      );
+
+      _updateMessage(
+        replyId,
+        (message) => message.copyWith(
           status: MessageStatus.error,
         ),
       );

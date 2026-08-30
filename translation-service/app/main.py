@@ -87,19 +87,9 @@ def translate(request: TranslationRequest):
 def translate_with_context(
     request: ContextTranslationRequest
 ):
-
     try:
-        context = request.context[-5:]
-
-        if context:
-            translation_input = "\n".join(
-                context + [request.text]
-            )
-        else:
-            translation_input = request.text
-
         translation = translation_model.translate(
-            text=translation_input,
+            text=request.text,
             source_language=request.source_language,
             target_language=request.target_language
         )

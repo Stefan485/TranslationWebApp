@@ -125,33 +125,57 @@ class ApiService {
     }
     
     Future<List<int>> textToSpeech({
-    required String text,
-    required String targetLang,
-    }) async {
-    try {
-        print(
-        'TTS: text="$text", '
-        'language="$targetLang"',
-        );
+      required String text,
+      required String targetLang,
+      }) async {
+      try {
+          print(
+          'TTS: text="$text", '
+          'language="$targetLang"',
+          );
 
-        final response = await _dio.post<List<int>>(
-        '$ttsUrl/tts-audio',
-        data: {
-            'text': text,
-            'language': targetLang,
-        },
-        options: Options(
-            responseType: ResponseType.bytes,
-        ),
-        );
+          final response = await _dio.post<List<int>>(
+          '$ttsUrl/tts-audio',
+          data: {
+              'text': text,
+              'language': targetLang,
+          },
+          options: Options(
+              responseType: ResponseType.bytes,
+          ),
+          );
 
-        print('TTS response received');
+          print('TTS response received');
 
-        return response.data!;
-    } on DioException catch (e) {
-        print('TTS ERROR: ${e.response?.statusCode}');
-        print('TTS ERROR BODY: ${e.response?.data}');
-        rethrow;
+          return response.data!;
+      } on DioException catch (e) {
+          print('TTS ERROR: ${e.response?.statusCode}');
+          print('TTS ERROR BODY: ${e.response?.data}');
+          rethrow;
+      }
     }
+
+
+    Future<TranslationResult> translateTextWithContext({
+      required String text,
+      required String sourceLang,
+      required String targetLang,
+      List<String> context = const [],
+    }) async {
+      final response = await _dio.post(
+        '$translationUrl/translate/context',
+        data: {
+          'text': text,
+          'source_language': sourceLang,
+          'target_language': targetLang,
+          'context': context,
+        },
+      );
+
+      return TranslationResult(
+        translatedText: response.data['translation'] as String,
+        detectedLang:
+            response.data['source_language'] as String?,
+      );
     }
 }
