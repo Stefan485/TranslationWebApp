@@ -21,7 +21,7 @@ dependencies:
   record: ^7.1.1
 
   # voice output
-  just_audio: ^0.9.40
+  audioplayers: ^6.5.0
 
   permission_handler: ^11.3.1
 

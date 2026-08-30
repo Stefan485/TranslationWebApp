@@ -9,14 +9,12 @@ class TranslationModel:
 
         print(f"Loading NLLB-200 1.3B on {self.device}")
 
-        # Load tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name
         )
 
-        # Load model
         self.model = AutoModelForSeq2SeqLM.from_pretrained(
-            self.model_name,
+            self.model_name
         )
 
         self.model.to(self.device)
@@ -24,12 +22,45 @@ class TranslationModel:
 
         print("NLLB-200 1.3B loaded successfully")
 
+    def get_nllb_language(self, language: str) -> str:
+        languages = {
+            "en": "eng_Latn",
+            "de": "deu_Latn",
+            "fr": "fra_Latn",
+            "es": "spa_Latn",
+            "it": "ita_Latn",
+            "ja": "jpn_Jpan",
+            "ko": "kor_Hang",
+            "pl": "pol_Latn",
+            "pt": "por_Latn",
+            "ru": "rus_Cyrl",
+            "tr": "tur_Latn",
+            "zh": "zho_Hans",
+            "sr": "srp_Cyrl",
+            "hr": "hrv_Latn",
+        }
+
+        if language not in languages:
+            raise ValueError(
+                f"Unsupported language: {language}"
+            )
+
+        return languages[language]
+
     def translate(
         self,
         text: str,
         source_language: str,
         target_language: str
-        ) -> str:
+    ) -> str:
+
+        source_language = self.get_nllb_language(
+            source_language
+        )
+
+        target_language = self.get_nllb_language(
+            target_language
+        )
 
         self.tokenizer.src_lang = source_language
 
@@ -58,5 +89,6 @@ class TranslationModel:
         )[0]
 
         return translation.strip()
+
 
 translation_model = TranslationModel()

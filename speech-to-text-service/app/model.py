@@ -23,7 +23,7 @@ def transcribe_audio(filename: str):
 
     segments, info = model.transcribe(
         filename,
-        beam_size=10,
+        beam_size=5,
         vad_filter=True,
         vad_parameters=dict(
             min_silence_duration_ms=500
