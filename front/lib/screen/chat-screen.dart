@@ -21,7 +21,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             _scrollController.animateTo(
                 _scrollController.position.maxScrollExtent,
                 duration: const Duration(milliseconds: 250),
-                curve: Curve.easeOut,
+                curve: Curves.easeOut,
             );
         });
     }

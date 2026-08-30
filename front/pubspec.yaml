@@ -18,7 +18,7 @@ dependencies:
   dio: ^5.5.0+1
 
   # voice input
-  record: ^5.1.2
+  record: ^7.1.1
 
   # voice output
   just_audio: ^0.9.40
