@@ -105,6 +105,10 @@ class TTSModel:
                 **inputs
             )
 
+        del inputs
+
+        torch.cuda.empty_cache()
+
         audio = audio.cpu().numpy().squeeze()
 
         # Normalize audio
@@ -143,7 +147,8 @@ class TTSModel:
             sample_rate,
             audio
         )
-
+        del audio  # ONLY after you've finished using the numpy copy
+        torch.cuda.empty_cache()
         print(f"Audio saved to: {filepath}")
 
         return filepath

@@ -75,18 +75,26 @@ class TranslationModel:
             target_language
         )
 
-        with torch.no_grad():
-            generated_tokens = self.model.generate(
-                **inputs,
-                forced_bos_token_id=target_language_id,
-                max_length=200,
-                num_beams=5
-            )
+        generated_tokens = self.model.generate(
+            **inputs,
+            forced_bos_token_id=target_language_id,
+            max_length=400,
+            num_beams=10
+        )
 
         translation = self.tokenizer.batch_decode(
             generated_tokens,
             skip_special_tokens=True
         )[0]
+
+        # Cleanup to free up memory
+        del inputs
+        del generated_tokens
+
+        torch.cuda.empty_cache()
+        import gc
+        gc.collect()
+        torch.cuda.empty_cache()
 
         return translation.strip()
 
