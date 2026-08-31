@@ -1,6 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-
+from dotenv import load_dotenv
+import os
 
 class TranslationModel:
     def __init__(self):
@@ -98,5 +99,8 @@ class TranslationModel:
 
         return translation.strip()
 
+load_dotenv()
+
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 translation_model = TranslationModel()

@@ -147,7 +147,7 @@ class TTSModel:
             sample_rate,
             audio
         )
-        del audio  # ONLY after you've finished using the numpy copy
+        del audio
         torch.cuda.empty_cache()
         print(f"Audio saved to: {filepath}")
 
