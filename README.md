@@ -10,4 +10,4 @@ Text-to-speech Service
 
  Translation Service
   - Meta NLLB-200 model
-  - [Hugging face page](https://huggingface.co/facebook/nllb-200-3.3B)
+   - [Hugging face page](https://huggingface.co/facebook/nllb-200-3.3B)
